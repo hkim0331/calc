@@ -1,0 +1,22 @@
+<h1 id="cgi-calculator-schemerdbgauchepostgresql">CGI calculator scheme/RDB(gauche/postgresql)</h1>
+<p>自分で調べられるようになったほうがいい。</p>
+<h2 id="gauche-から-postgres-へのコネクションの取り方">Gauche から Postgres へのコネクションの取り方</h2>
+<p>pg_hba.conf をよく読む。hbaは host base authentication の略だそうな。</p>
+<p>vm2014 では <code>/etc/postgresql/9.3/main/pg_hba.conf</code> にある。</p>
+<pre><code>local   all             all                                     trust</code></pre>
+<p>の trust の部分は vm2014 にアカウントを持つユーザは信用するという意味で、 ローカルから postgresql にそのアカウント名でアクセスしてきたら許可する。 trust を md5 に変えると、psql で作成したユーザ名+パスワードで認証できるようだ。 peer とあったらホストマシンの認証を受けるということ。 postgres ユーザは認証が peer になっている。</p>
+<p>postgre のユーザはユーザ名のデータベースのオーナーとなる（のか、 そういう風に hkim が vm2014 に仕組んだのか、忘れてしまったが）ので、 vm2014 上で calculator を動かすには、</p>
+<pre class="sourceCode scheme"><code class="sourceCode scheme">(<span class="kw">define</span><span class="fu"> *conn* </span>(dbi-connect <span class="st">&quot;dbi:pg&quot;</span> :username <span class="st">&quot;hkim&quot;</span>))</code></pre>
+<h2 id="ファイルを分離するべきか">ファイルを分離するべきか</h2>
+<p>学生は分離することを、まず、覚えるべき。</p>
+<p>だが、教条主義的にソースコードをぶつ切りにするのはどうかな？ 機能を交通整理し、適切な関数に分担させることをもっと重視すべき。 関数名にももっと神経を使おう。</p>
+<p>もちろん必要なライブラリは require するが、 今回は自分で書くコードは calc.cgi ひとつにまとめる。現在、130行足らず。</p>
+<h2 id="失敗したこと">失敗したこと</h2>
+<p>emacs で gosh 動かし、書いた関数の動作を確かめつつ、プログラムを作ったが、 プログラムの最初の方に、</p>
+<pre class="sourceCode scheme"><code class="sourceCode scheme">(<span class="kw">define</span><span class="fu"> db-close </span>(dbi-close *conn*))</code></pre>
+<p>これがプログラムの動作を止めていた。だって、こやつ、関数じゃない。 cgi が呼出され、その直上でせっかく開いた db とのコネクションを切る。 こういう、うっかりミスもやはり、実際にプログラム書かないと経験しない。 覚えない。</p>
+<pre class="sourceCode scheme"><code class="sourceCode scheme">(<span class="kw">define</span><span class="fu"> </span>(<span class="kw">lambda</span> () (db-close (dbi-close *conn*))))</code></pre>
+<h2 id="失敗したこと-1">失敗したこと</h2>
+<p>今回のデザインは db を単にセッションを越えて保持されるメモリとして使うこと。 それなのに update すべきところを insert して、データベースの行を増やしていた。 psql でモニタするまで気がつかなかった。イージーミスだなあ。</p>
+<h2 id="失敗したこと-2">失敗したこと</h2>
+<p>その他にもはずかしい小さいミスはたくさん。</p>

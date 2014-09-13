@@ -1,0 +1,15 @@
+div#calc {
+    border: 1pt solid black;
+    width: 130px;
+    margin: 0 auto;
+}
+div#calc p {
+    border: 1pt solid gray;
+    background: #ffffcc;
+    text-align: right;
+    margin: 5px 5px;
+}
+
+form {
+
+}
