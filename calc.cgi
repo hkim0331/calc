@@ -63,37 +63,21 @@
     (car (map (lambda (x) (dbi-get-value x 0)) ret))
     ))
 
-;; コラムの値を取得する。
-;; FIXME
-;; getの引数は num1, num2, op しか許さないので
-;; get-num1 とか get-num2 のような関数にした方がいいだろう。
 (define get
   (lambda (var)
-    (let* ((ret (exec (format #f "select ~a from calc;" var)))
-           (val (value ret)))
-      ;; ださっ。
-      (if (string->number val) (string->number val)
-          val)
-      )))
+      (value (exec (format #f "select ~a from calc;" var)))))
 
-;; (define get
-;;   (lambda (var)
-;;     (let* ((ret (exec (format #f "select ~a from calc;" var)))
-;;            (val (value ret)))
-;;       val
-;;       )))
+(define get-num1
+  (lambda ()
+    (string->number (get "num1"))))
 
-;; (define get-num1
-;;   (lambda ()
-;;     (string->number (get "num1"))))
+(define get-num2
+  (lambda ()
+    (string->number (get "num2"))))
 
-;; (define get-num2
-;;   (lambda ()
-;;     (string->number (get "num2"))))
-
-;; (define get-op
-;;   (lambda ()
-;;     (get "op")))
+(define get-op
+  (lambda ()
+    (get "op")))
 
 ;; C が押されたときの動作。
 (define clear
@@ -105,9 +89,9 @@
 ;; = が押された時、計算を実行する。
 (define do-calc
   (lambda ()
-    (let ((op (get "op"))
-          (num1 (get "num1"))
-          (num2 (get "num2")))
+    (let ((op (get-op))
+          (num1 (get-num1))
+          (num2 (get-num2)))
       ;; FIXME, 繰り返しのコード。マクロで書く？
       (cond
        ((string=? op "+") (+ num2 num1))
@@ -120,17 +104,17 @@
 (define operator
   (lambda (op)
     (exec (format #f "update calc set op='~a';" op))
-    (exec (format #f "update calc set num2='~a';" (get "num1")))
+    (exec (format #f "update calc set num2='~a';" (get-num1)))
     (exec "update calc set num1=0;")
-    (get "num2")
+    (get-num2)
     ))
 
 ;; 数字が押されたら、num1 をアップデートする。
 (define number
   (lambda (key)
     (exec (format #f "update calc set num1='~a';"
-                  (+ (* 10 (get "num1")) (string->number key))))
-    (get "num1")
+                  (+ (* 10 (get-num1)) (string->number key))))
+    (get-num1)
     ))
 
 (cgi-main
