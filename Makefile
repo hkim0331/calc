@@ -6,3 +6,5 @@ index.html: README.md
 install:
 	rsync -a ./ vm2014.melt.kyutech.ac.jp
 
+clean:
+	${RM} *.html
